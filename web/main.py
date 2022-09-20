@@ -187,7 +187,7 @@ def startup():
         if b.branch_name == "base":
             continue
         previous_layers = []
-        l = b.bottom_layer
+        l = b.layer
         while l:
             previous_layers.append(str(l.id))
             l = l.bottom_layer

@@ -28,3 +28,57 @@ services:
 volumes:
   appdata:
 ```
+
+Execute `docker compose up` to initialize the container.
+
+Then you can access handful scripts inside the container.
+
+
+### Connect to the `base` database inside the container
+
+```shell
+$ docker compose exec mysql mysql -uroot -h127.0.0.1 --skip-password -P33061
+mysql: [Warning] Using a password on the command line interface can be insecure.
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 8
+Server version: 8.0.30-0ubuntu0.22.04.1 (Ubuntu)
+
+Copyright (c) 2000, 2022, Oracle and/or its affiliates.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql>
+```
+
+
+### Create branch from database
+
+```shell
+$ docker compose exec mysql /app/scripts/create_branch.sh base feature/abc
+{"branch_name":"feature/abc", "base_branch":"base", "port":33062}
+```
+
+To be able to use the new branch connect using the new port: 
+
+```shell
+$ docker compose exec mysql mysql -uroot -h127.0.0.1 --skip-password -P33062
+```
+
+### List branches
+
+```shell
+$ docker compose exec mysql /app/scripts/list_branches.sh
+[{"branch_name":"base"}, {"branch_name":"feature/abc"}]
+```
+
+### Delete branch from database (will drop all the data)
+
+```shell
+$ docker compose exec mysql /app/scripts/delete_branch.sh feature/abc
+{"branch_name":"feature/abc"}
+```
+
