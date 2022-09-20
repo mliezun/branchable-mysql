@@ -35,4 +35,4 @@ RUN pip install -r web/requirements.txt
 COPY web/main.py web/main.py
 
 
-ENTRYPOINT [ "./entrypoint.sh" ]
+ENTRYPOINT [ "./scripts/entrypoint.sh" ]
