@@ -174,8 +174,6 @@ def delete_branch():
 
 
 def startup():
-    Layer.drop_table()
-    Branch.drop_table()
     Layer.create_table()
     Branch.create_table()
     
@@ -185,4 +183,15 @@ def startup():
     mount_layer([], layer)
     processes["base"] = start_mysqld(layer, port)
     
+    for b in Branch.select().iterator():
+        if b.branch_name == "base":
+            continue
+        previous_layers = []
+        l = b.bottom_layer
+        while l:
+            previous_layers.append(str(l.id))
+            l = l.bottom_layer
+        mount_layer(previous_layers[1:], previous_layers[0])
+        processes[b.branch_name] = start_mysqld(previous_layers[0], b.port)
+
 startup()
