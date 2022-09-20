@@ -10,13 +10,13 @@ function print_usage() {
 }
 
 if [ -z ${BASE_BRANCH+x} ]; then 
-    print_usage();
+    print_usage;
     echo "BASE_BRANCH is required";
     exit 1;
 fi
 
 if [ -z ${NEW_BRANCH+x} ]; then 
-    print_usage();
+    print_usage;
     echo "NEW_BRANCH is required";
     exit 1;
 fi

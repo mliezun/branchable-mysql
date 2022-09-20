@@ -11,7 +11,7 @@ changes to the db.
 
 ## Usage
 
-Create a like the one located in `examples/docker-compose.yml`
+Create a file like the one located in `examples/docker-compose.yml`
 
 ```yaml
 version: "3"
@@ -23,10 +23,8 @@ services:
     privileged: true
     restart: always
     volumes:
-      - dbdata:/app/layers
-      - appdata:/app/web/app.db
+      - appdata:/app/
 
 volumes:
-  dbdata:
   appdata:
 ```

@@ -9,7 +9,7 @@ function print_usage() {
 }
 
 if [ -z ${BRANCH_NAME+x} ]; then 
-    print_usage();
+    print_usage;
     echo "BRANCH_NAME is required";
     exit 1;
 fi
