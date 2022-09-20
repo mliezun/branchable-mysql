@@ -1,5 +1,4 @@
 import datetime
-import itertools
 import logging
 import uuid
 from typing import List
@@ -29,9 +28,13 @@ class DBBaseModel(Model):
 class Layer(DBBaseModel):
     bottom_layer = ForeignKeyField("self", null=True)
     
+
+class Port(DBBaseModel):
+    n = IntegerField(unique=True)
+    
 class Branch(DBBaseModel):
     branch_name = CharField(unique=True)
-    port = IntegerField(unique=True)
+    port = ForeignKeyField(Port)
     layer = ForeignKeyField(Layer, default=Layer.create)
     
 class CreateBranch(BaseModel):
@@ -47,9 +50,11 @@ class APIMessage(BaseModel):
 
 
 BASE_PORT = 33061
-COUNTER = itertools.count()
 def get_port():
-    return  BASE_PORT + next(COUNTER)
+    for p in Port.select().iterator():
+        if not Branch.filter(port=p).exists():
+            return p
+    raise Port.DoesNotExist
 
 
 def start_mysqld(layer: str, port: int):
@@ -117,6 +122,9 @@ def create_branch(branch: CreateBranch):
     if not Branch.filter(branch_name=branch.base_branch).exists():
         return JSONResponse(status_code=404, content={"message": "Base branch not found"})
     
+    if Branch.filter(branch_name=branch.branch_name).exists():
+        return JSONResponse(status_code=400, content={"message": "Branch already exists"})
+    
     
     base_branch = Branch.get(branch_name=branch.base_branch)
     bottom_layer = str(base_branch.layer.id)
@@ -134,7 +142,7 @@ def create_branch(branch: CreateBranch):
         previous_layers.append(str(l.id))
         l = l.bottom_layer
     mount_layer(previous_layers, layer)
-    processes[branch.base_branch] = start_mysqld(layer, base_branch.port)
+    processes[branch.base_branch] = start_mysqld(layer, base_branch.port.n)
     base_branch.layer = layer
     base_branch.save()
     
@@ -145,9 +153,9 @@ def create_branch(branch: CreateBranch):
     
     layer = str(new_branch.layer.id)
     mount_layer(previous_layers, layer)
-    processes[branch.branch_name] = start_mysqld(layer, port)
+    processes[branch.branch_name] = start_mysqld(layer, port.n)
     
-    branch.port = port
+    branch.port = port.n
     return branch
 
 @app.delete("/delete-branch", response_model=BranchModel, responses={404: {"model": APIMessage}})
@@ -174,11 +182,15 @@ def delete_branch():
 
 
 def startup():
+    Port.create_table()
     Layer.create_table()
     Branch.create_table()
     
-    port = get_port()
-    base_branch, _ = Branch.get_or_create(branch_name="base", port=port)
+    for i in range(100):
+        Port.get_or_create(n=BASE_PORT+i)
+    
+    port = BASE_PORT
+    base_branch, _ = Branch.get_or_create(branch_name="base", port=Port.get(n=BASE_PORT))
     layer = str(base_branch.layer.id)
     mount_layer([], layer)
     processes["base"] = start_mysqld(layer, port)
@@ -192,6 +204,6 @@ def startup():
             previous_layers.append(str(l.id))
             l = l.bottom_layer
         mount_layer(previous_layers[1:], previous_layers[0])
-        processes[b.branch_name] = start_mysqld(previous_layers[0], b.port)
+        processes[b.branch_name] = start_mysqld(previous_layers[0], b.port.n)
 
 startup()
