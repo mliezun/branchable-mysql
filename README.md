@@ -8,6 +8,7 @@ to fix if folks are working on parallel branches.
 If we can have a database for each branch of a project, that will remove much of the pain of having multiple devs applying
 changes to the db.
 
+Related [blogpost](https://mliezun.github.io/2022/09/20/branchable-mysql.html).
 
 ## Usage
 
